@@ -142,8 +142,6 @@ namespace Microsoft.Extensions.DependencyInjection
             // Options
             //
             services.TryAddEnumerable(
-                ServiceDescriptor.Transient<IOptionsFactory<JsonOptions>, JsonOptionsFactory>());
-            services.TryAddEnumerable(
                 ServiceDescriptor.Transient<IConfigureOptions<MvcOptions>, MvcCoreMvcOptionsSetup>());
             services.TryAddEnumerable(
                 ServiceDescriptor.Transient<IPostConfigureOptions<MvcOptions>, MvcOptionsConfigureCompatibilityOptions>());
