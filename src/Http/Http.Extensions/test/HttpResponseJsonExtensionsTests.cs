@@ -10,6 +10,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http.Json;
 using Xunit;
 
+#nullable enable
+
 namespace Microsoft.AspNetCore.Http.Extensions.Tests
 {
     public class HttpResponseJsonExtensionsTests
@@ -160,7 +162,7 @@ namespace Microsoft.AspNetCore.Http.Extensions.Tests
             context.Response.Body = body;
 
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentNullException>(async () => await context.Response.WriteAsJsonAsync(value: null, type: null));
+            await Assert.ThrowsAsync<ArgumentNullException>(async () => await context.Response.WriteAsJsonAsync(value: null, type: null!));
         }
 
         [Fact]
@@ -172,7 +174,7 @@ namespace Microsoft.AspNetCore.Http.Extensions.Tests
             context.Response.Body = body;
 
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentNullException>(async () => await HttpResponseJsonExtensions.WriteAsJsonAsync(response: null, value: null, typeof(int?)));
+            await Assert.ThrowsAsync<ArgumentNullException>(async () => await HttpResponseJsonExtensions.WriteAsJsonAsync(response: null!, value: null, typeof(int?)));
         }
 
         private class TestStream : Stream
@@ -211,14 +213,14 @@ namespace Microsoft.AspNetCore.Http.Extensions.Tests
             public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
             {
                 var tcs = new TaskCompletionSource<int>();
-                cancellationToken.Register(s => ((TaskCompletionSource<int>)s).SetCanceled(), tcs);
+                cancellationToken.Register(s => ((TaskCompletionSource<int>)s!).SetCanceled(), tcs);
                 return new ValueTask<int>(tcs.Task);
             }
 
             public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
             {
                 var tcs = new TaskCompletionSource<int>();
-                cancellationToken.Register(s => ((TaskCompletionSource<int>)s).SetCanceled(), tcs);
+                cancellationToken.Register(s => ((TaskCompletionSource<int>)s!).SetCanceled(), tcs);
                 return new ValueTask(tcs.Task);
             }
         }

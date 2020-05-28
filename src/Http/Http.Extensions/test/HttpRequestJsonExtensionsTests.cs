@@ -11,6 +11,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http.Json;
 using Xunit;
 
+#nullable enable
+
 namespace Microsoft.AspNetCore.Http.Extensions.Tests
 {
     public class HttpRequestJsonExtensionsTests
@@ -109,7 +111,7 @@ namespace Microsoft.AspNetCore.Http.Extensions.Tests
             context.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes("1"));
 
             // Act
-            var result = (int)await context.Request.ReadFromJsonAsync(typeof(int));
+            var result = (int?)await context.Request.ReadFromJsonAsync(typeof(int));
 
             // Assert
             Assert.Equal(1, result);
@@ -127,7 +129,7 @@ namespace Microsoft.AspNetCore.Http.Extensions.Tests
             options.AllowTrailingCommas = true;
 
             // Act
-            var result = (List<int>)await context.Request.ReadFromJsonAsync(typeof(List<int>), options);
+            var result = (List<int>?)await context.Request.ReadFromJsonAsync(typeof(List<int>), options);
 
             // Assert
             Assert.Collection(result,

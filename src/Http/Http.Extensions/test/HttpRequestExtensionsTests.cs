@@ -3,6 +3,8 @@
 
 using Xunit;
 
+#nullable enable
+
 namespace Microsoft.AspNetCore.Http.Extensions.Tests
 {
     public class HttpRequestExtensionsTests

@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,7 +17,7 @@ namespace Microsoft.AspNetCore.Http.Json
     {
         public static Task WriteAsJsonAsync<TValue>(
             this HttpResponse response,
-            TValue value,
+            [AllowNull] TValue value,
             CancellationToken cancellationToken = default)
         {
             return response.WriteAsJsonAsync<TValue>(value, options: null, contentType: JsonConstants.JsonContentTypeWithCharset, cancellationToken);
@@ -24,7 +25,7 @@ namespace Microsoft.AspNetCore.Http.Json
 
         public static Task WriteAsJsonAsync<TValue>(
             this HttpResponse response,
-            TValue value,
+            [AllowNull] TValue value,
             JsonSerializerOptions? options,
             CancellationToken cancellationToken = default)
         {
@@ -33,7 +34,7 @@ namespace Microsoft.AspNetCore.Http.Json
 
         public static Task WriteAsJsonAsync<TValue>(
             this HttpResponse response,
-            TValue value,
+            [AllowNull] TValue value,
             JsonSerializerOptions? options,
             string? contentType,
             CancellationToken cancellationToken = default)
@@ -53,12 +54,12 @@ namespace Microsoft.AspNetCore.Http.Json
                 response.ContentType = contentType;
             }
             response.StatusCode = StatusCodes.Status200OK;
-            return JsonSerializer.SerializeAsync<TValue>(response.Body, value, options, cancellationToken);
+            return JsonSerializer.SerializeAsync<TValue>(response.Body, value!, options, cancellationToken);
         }
 
         public static Task WriteAsJsonAsync(
             this HttpResponse response,
-            object value,
+            object? value,
             Type type,
             CancellationToken cancellationToken = default)
         {
@@ -67,7 +68,7 @@ namespace Microsoft.AspNetCore.Http.Json
 
         public static Task WriteAsJsonAsync(
             this HttpResponse response,
-            object value,
+            object? value,
             Type type,
             JsonSerializerOptions? options,
             CancellationToken cancellationToken = default)
@@ -77,7 +78,7 @@ namespace Microsoft.AspNetCore.Http.Json
 
         public static Task WriteAsJsonAsync(
             this HttpResponse response,
-            object value,
+            object? value,
             Type type,
             JsonSerializerOptions? options,
             string? contentType,
