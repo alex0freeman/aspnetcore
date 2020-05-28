@@ -3,11 +3,14 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Primitives;
 
 #nullable enable
 
@@ -24,7 +27,7 @@ namespace Microsoft.AspNetCore.Http.Json
         }
 
         [return: MaybeNull]
-        public static ValueTask<TValue> ReadFromJsonAsync<TValue>(
+        public static async ValueTask<TValue> ReadFromJsonAsync<TValue>(
             this HttpRequest request,
             JsonSerializerOptions? options,
             CancellationToken cancellationToken = default)
@@ -34,9 +37,9 @@ namespace Microsoft.AspNetCore.Http.Json
                 throw new ArgumentNullException(nameof(request));
             }
 
-            if (!request.HasJsonContentType())
+            if (!request.HasJsonContentType(out var charset))
             {
-                return new ValueTask<TValue>(Task.FromException<TValue>(CreateContentTypeError(request)));
+                throw CreateContentTypeError(request);
             }
 
             if (options == null)
@@ -44,7 +47,20 @@ namespace Microsoft.AspNetCore.Http.Json
                 options = ResolveSerializerOptions(request.HttpContext);
             }
 
-            return JsonSerializer.DeserializeAsync<TValue>(request.Body, options, cancellationToken);
+            var encoding = GetEncodingFromCharset(charset);
+            var (inputStream, usesTranscodingStream) = GetInputStream(request.HttpContext, encoding);
+
+            try
+            {
+                return await JsonSerializer.DeserializeAsync<TValue>(inputStream, options, cancellationToken);
+            }
+            finally
+            {
+                if (usesTranscodingStream)
+                {
+                    await inputStream.DisposeAsync();
+                }
+            }
         }
 
         public static ValueTask<object?> ReadFromJsonAsync(
@@ -55,7 +71,7 @@ namespace Microsoft.AspNetCore.Http.Json
             return request.ReadFromJsonAsync(type, options: null, cancellationToken);
         }
 
-        public static ValueTask<object?> ReadFromJsonAsync(
+        public static async ValueTask<object?> ReadFromJsonAsync(
             this HttpRequest request,
             Type type,
             JsonSerializerOptions? options,
@@ -70,9 +86,9 @@ namespace Microsoft.AspNetCore.Http.Json
                 throw new ArgumentNullException(nameof(type));
             }
 
-            if (!request.HasJsonContentType())
+            if (!request.HasJsonContentType(out var charset))
             {
-                return new ValueTask<object?>(Task.FromException<object?>(CreateContentTypeError(request)));
+                throw CreateContentTypeError(request);
             }
 
             if (options == null)
@@ -80,7 +96,20 @@ namespace Microsoft.AspNetCore.Http.Json
                 options = ResolveSerializerOptions(request.HttpContext);
             }
 
-            return JsonSerializer.DeserializeAsync(request.Body, type, options, cancellationToken);
+            var encoding = GetEncodingFromCharset(charset);
+            var (inputStream, usesTranscodingStream) = GetInputStream(request.HttpContext, encoding);
+
+            try
+            {
+                return await JsonSerializer.DeserializeAsync(inputStream, type, options, cancellationToken);
+            }
+            finally
+            {
+                if (usesTranscodingStream)
+                {
+                    await inputStream.DisposeAsync();
+                }
+            }
         }
 
         private static JsonSerializerOptions ResolveSerializerOptions(HttpContext httpContext)
@@ -92,6 +121,37 @@ namespace Microsoft.AspNetCore.Http.Json
         private static InvalidOperationException CreateContentTypeError(HttpRequest request)
         {
             return new InvalidOperationException($"Unable to read the request as JSON because the request content type '{request.ContentType}' is not a known JSON content type.");
+        }
+
+        private static (Stream inputStream, bool usesTranscodingStream) GetInputStream(HttpContext httpContext, Encoding? encoding)
+        {
+            if (encoding == null || encoding.CodePage == Encoding.UTF8.CodePage)
+            {
+                return (httpContext.Request.Body, false);
+            }
+
+            var inputStream = Encoding.CreateTranscodingStream(httpContext.Request.Body, encoding, Encoding.UTF8, leaveOpen: true);
+            return (inputStream, true);
+        }
+
+        private static Encoding? GetEncodingFromCharset(StringSegment charset)
+        {
+            if (charset.Equals("utf-8", StringComparison.OrdinalIgnoreCase))
+            {
+                // This is an optimization for utf-8 that prevents the Substring caused by
+                // charset.Value
+                return Encoding.UTF8;
+            }
+
+            try
+            {
+                // charset.Value might be an invalid encoding name as in charset=invalid.
+                return charset.HasValue ? Encoding.GetEncoding(charset.Value) : null;
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Unable to resolve charset '{charset}' to a known encoding.", ex);
+            }
         }
     }
 }

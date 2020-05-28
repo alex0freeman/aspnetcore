@@ -83,11 +83,43 @@ namespace Microsoft.AspNetCore.Http.Extensions.Tests
         }
 
         [Fact]
+        public async Task ReadFromJsonAsyncGeneric_Utf8Encoding_ReturnValue()
+        {
+            // Arrange
+            var context = new DefaultHttpContext();
+            context.Request.ContentType = "application/json; charset=utf-8";
+            context.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes("[1,2]"));
+
+            // Act
+            var result = await context.Request.ReadFromJsonAsync<List<int>>();
+
+            // Assert
+            Assert.Collection(result,
+                i => Assert.Equal(1, i),
+                i => Assert.Equal(2, i));
+        }
+
+        [Fact]
+        public async Task ReadFromJsonAsyncGeneric_Utf16Encoding_ReturnValue()
+        {
+            // Arrange
+            var context = new DefaultHttpContext();
+            context.Request.ContentType = "application/json; charset=utf-16";
+            context.Request.Body = new MemoryStream(Encoding.Unicode.GetBytes(@"{""name"": ""激光這兩個字是甚麼意思""}"));
+
+            // Act
+            var result = await context.Request.ReadFromJsonAsync<Dictionary<string, string>>();
+
+            // Assert
+            Assert.Equal("激光這兩個字是甚麼意思", result["name"]);
+        }
+
+        [Fact]
         public async Task ReadFromJsonAsyncGeneric_WithCancellationToken_CancellationRaised()
         {
             // Arrange
             var context = new DefaultHttpContext();
-            context.Request.ContentType = "application/json";
+            context.Request.ContentType = "application /json";
             context.Request.Body = new TestStream();
 
             var cts = new CancellationTokenSource();
@@ -103,6 +135,20 @@ namespace Microsoft.AspNetCore.Http.Extensions.Tests
         }
 
         [Fact]
+        public async Task ReadFromJsonAsyncGeneric_InvalidEncoding_ThrowError()
+        {
+            // Arrange
+            var context = new DefaultHttpContext();
+            context.Request.ContentType = "application/json; charset=invalid";
+
+            // Act
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () => await context.Request.ReadFromJsonAsync<object>());
+
+            // Assert
+            Assert.Equal("Unable to resolve charset 'invalid' to a known encoding.", ex.Message);
+        }
+
+        [Fact]
         public async Task ReadFromJsonAsync_ValidBodyContent_ReturnValue()
         {
             // Arrange
@@ -115,6 +161,35 @@ namespace Microsoft.AspNetCore.Http.Extensions.Tests
 
             // Assert
             Assert.Equal(1, result);
+        }
+
+        [Fact]
+        public async Task ReadFromJsonAsync_Utf16Encoding_ReturnValue()
+        {
+            // Arrange
+            var context = new DefaultHttpContext();
+            context.Request.ContentType = "application/json; charset=utf-16";
+            context.Request.Body = new MemoryStream(Encoding.Unicode.GetBytes(@"{""name"": ""激光這兩個字是甚麼意思""}"));
+
+            // Act
+            var result = (Dictionary<string, string>?)await context.Request.ReadFromJsonAsync(typeof(Dictionary<string, string>));
+
+            // Assert
+            Assert.Equal("激光這兩個字是甚麼意思", result!["name"]);
+        }
+
+        [Fact]
+        public async Task ReadFromJsonAsync_InvalidEncoding_ThrowError()
+        {
+            // Arrange
+            var context = new DefaultHttpContext();
+            context.Request.ContentType = "application/json; charset=invalid";
+
+            // Act
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () => await context.Request.ReadFromJsonAsync(typeof(object)));
+
+            // Assert
+            Assert.Equal("Unable to resolve charset 'invalid' to a known encoding.", ex.Message);
         }
 
         [Fact]
