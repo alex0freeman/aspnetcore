@@ -44,10 +44,7 @@ namespace Microsoft.AspNetCore.Http.Json
                 throw new ArgumentNullException(nameof(response));
             }
 
-            if (options == null)
-            {
-                options = ResolveSerializerOptions(response.HttpContext);
-            }
+            options ??= ResolveSerializerOptions(response.HttpContext);
 
             if (contentType != null)
             {
@@ -93,10 +90,7 @@ namespace Microsoft.AspNetCore.Http.Json
                 throw new ArgumentNullException(nameof(type));
             }
 
-            if (options == null)
-            {
-                options = ResolveSerializerOptions(response.HttpContext);
-            }
+            options ??= ResolveSerializerOptions(response.HttpContext);
 
             if (contentType != null)
             {
