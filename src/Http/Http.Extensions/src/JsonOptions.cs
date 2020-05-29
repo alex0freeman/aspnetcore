@@ -10,14 +10,16 @@ namespace Microsoft.AspNetCore.Http.Json
 {
     public class JsonOptions
     {
-        // TODO: Update to create options using https://github.com/dotnet/runtime/pull/36073
-        internal static readonly JsonSerializerOptions DefaultSerializerOptions = new JsonSerializerOptions()
+        internal static readonly JsonSerializerOptions DefaultSerializerOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web)
         {
+            // Web defaults don't use the relex JSON escaping encoder.
+            //
+            // Because these options are for producing content that is written directly to the request
+            // (and not embedded in an HTML page for example), we can use UnsafeRelaxedJsonEscaping.
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            PropertyNameCaseInsensitive = true
         };
 
+        // Use a copy so the defaults are not modified.
         public JsonSerializerOptions SerializerOptions { get; } = new JsonSerializerOptions(DefaultSerializerOptions);
     }
 }

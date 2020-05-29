@@ -117,6 +117,26 @@ namespace Microsoft.AspNetCore.Http.Extensions.Tests
         }
 
         [Fact]
+        public async Task WriteAsJsonAsyncGeneric_ObjectWithStrings_CamcelCaseAndNotEscaped()
+        {
+            // Arrange
+            var body = new MemoryStream();
+            var context = new DefaultHttpContext();
+            context.Response.Body = body;
+            var value = new TestObject
+            {
+                StringProperty = "激光這兩個字是甚麼意思"
+            };
+
+            // Act
+            await context.Response.WriteAsJsonAsync(value);
+
+            // Assert
+            var data = Encoding.UTF8.GetString(body.ToArray());
+            Assert.Equal(@"{""stringProperty"":""激光這兩個字是甚麼意思""}", data);
+        }
+
+        [Fact]
         public async Task WriteAsJsonAsync_SimpleValue_JsonResponse()
         {
             // Arrange
@@ -175,6 +195,31 @@ namespace Microsoft.AspNetCore.Http.Extensions.Tests
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentNullException>(async () => await HttpResponseJsonExtensions.WriteAsJsonAsync(response: null!, value: null, typeof(int?)));
+        }
+
+        [Fact]
+        public async Task WriteAsJsonAsync_ObjectWithStrings_CamcelCaseAndNotEscaped()
+        {
+            // Arrange
+            var body = new MemoryStream();
+            var context = new DefaultHttpContext();
+            context.Response.Body = body;
+            var value = new TestObject
+            {
+                StringProperty = "激光這兩個字是甚麼意思"
+            };
+
+            // Act
+            await context.Response.WriteAsJsonAsync(value, typeof(TestObject));
+
+            // Assert
+            var data = Encoding.UTF8.GetString(body.ToArray());
+            Assert.Equal(@"{""stringProperty"":""激光這兩個字是甚麼意思""}", data);
+        }
+
+        public class TestObject
+        {
+            public string? StringProperty { get; set; }
         }
 
         private class TestStream : Stream

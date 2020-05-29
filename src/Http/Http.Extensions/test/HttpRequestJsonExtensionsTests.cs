@@ -145,7 +145,7 @@ namespace Microsoft.AspNetCore.Http.Extensions.Tests
             var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () => await context.Request.ReadFromJsonAsync<object>());
 
             // Assert
-            Assert.Equal("Unable to resolve charset 'invalid' to a known encoding.", ex.Message);
+            Assert.Equal("Unable to read the request as JSON because the request content type charset 'invalid' is not a known encoding.", ex.Message);
         }
 
         [Fact]
@@ -189,7 +189,7 @@ namespace Microsoft.AspNetCore.Http.Extensions.Tests
             var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () => await context.Request.ReadFromJsonAsync(typeof(object)));
 
             // Assert
-            Assert.Equal("Unable to resolve charset 'invalid' to a known encoding.", ex.Message);
+            Assert.Equal("Unable to read the request as JSON because the request content type charset 'invalid' is not a known encoding.", ex.Message);
         }
 
         [Fact]

@@ -20,7 +20,7 @@ namespace Microsoft.AspNetCore.Http.Json
             [AllowNull] TValue value,
             CancellationToken cancellationToken = default)
         {
-            return response.WriteAsJsonAsync<TValue>(value, options: null, contentType: JsonConstants.JsonContentTypeWithCharset, cancellationToken);
+            return response.WriteAsJsonAsync<TValue>(value, options: null, contentType: null, cancellationToken);
         }
 
         public static Task WriteAsJsonAsync<TValue>(
@@ -29,7 +29,7 @@ namespace Microsoft.AspNetCore.Http.Json
             JsonSerializerOptions? options,
             CancellationToken cancellationToken = default)
         {
-            return response.WriteAsJsonAsync<TValue>(value, options, contentType: JsonConstants.JsonContentTypeWithCharset, cancellationToken);
+            return response.WriteAsJsonAsync<TValue>(value, options, contentType: null, cancellationToken);
         }
 
         public static Task WriteAsJsonAsync<TValue>(
@@ -46,10 +46,7 @@ namespace Microsoft.AspNetCore.Http.Json
 
             options ??= ResolveSerializerOptions(response.HttpContext);
 
-            if (contentType != null)
-            {
-                response.ContentType = contentType;
-            }
+            response.ContentType = contentType ?? JsonConstants.JsonContentTypeWithCharset;
             response.StatusCode = StatusCodes.Status200OK;
             return JsonSerializer.SerializeAsync<TValue>(response.Body, value!, options, cancellationToken);
         }
@@ -60,7 +57,7 @@ namespace Microsoft.AspNetCore.Http.Json
             Type type,
             CancellationToken cancellationToken = default)
         {
-            return response.WriteAsJsonAsync(value, type, options: null, contentType: JsonConstants.JsonContentTypeWithCharset, cancellationToken);
+            return response.WriteAsJsonAsync(value, type, options: null, contentType: null, cancellationToken);
         }
 
         public static Task WriteAsJsonAsync(
@@ -70,7 +67,7 @@ namespace Microsoft.AspNetCore.Http.Json
             JsonSerializerOptions? options,
             CancellationToken cancellationToken = default)
         {
-            return response.WriteAsJsonAsync(value, type, options, contentType: JsonConstants.JsonContentTypeWithCharset, cancellationToken);
+            return response.WriteAsJsonAsync(value, type, options, contentType: null, cancellationToken);
         }
 
         public static Task WriteAsJsonAsync(
@@ -92,10 +89,7 @@ namespace Microsoft.AspNetCore.Http.Json
 
             options ??= ResolveSerializerOptions(response.HttpContext);
 
-            if (contentType != null)
-            {
-                response.ContentType = contentType;
-            }
+            response.ContentType = contentType ?? JsonConstants.JsonContentTypeWithCharset;
             response.StatusCode = StatusCodes.Status200OK;
             return JsonSerializer.SerializeAsync(response.Body, value, type, options, cancellationToken);
         }

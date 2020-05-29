@@ -2,7 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
 using System.Text.Json;
@@ -18,7 +17,6 @@ namespace Microsoft.AspNetCore.Http.Json
 {
     public static class HttpRequestJsonExtensions
     {
-        [return: MaybeNull]
         public static ValueTask<TValue> ReadFromJsonAsync<TValue>(
             this HttpRequest request,
             CancellationToken cancellationToken = default)
@@ -26,7 +24,6 @@ namespace Microsoft.AspNetCore.Http.Json
             return request.ReadFromJsonAsync<TValue>(options: null, cancellationToken);
         }
 
-        [return: MaybeNull]
         public static async ValueTask<TValue> ReadFromJsonAsync<TValue>(
             this HttpRequest request,
             JsonSerializerOptions? options,
@@ -42,10 +39,7 @@ namespace Microsoft.AspNetCore.Http.Json
                 throw CreateContentTypeError(request);
             }
 
-            if (options == null)
-            {
-                options = ResolveSerializerOptions(request.HttpContext);
-            }
+            options ??= ResolveSerializerOptions(request.HttpContext);
 
             var encoding = GetEncodingFromCharset(charset);
             var (inputStream, usesTranscodingStream) = GetInputStream(request.HttpContext, encoding);
@@ -91,10 +85,7 @@ namespace Microsoft.AspNetCore.Http.Json
                 throw CreateContentTypeError(request);
             }
 
-            if (options == null)
-            {
-                options = ResolveSerializerOptions(request.HttpContext);
-            }
+            options ??= ResolveSerializerOptions(request.HttpContext);
 
             var encoding = GetEncodingFromCharset(charset);
             var (inputStream, usesTranscodingStream) = GetInputStream(request.HttpContext, encoding);
@@ -150,7 +141,7 @@ namespace Microsoft.AspNetCore.Http.Json
             }
             catch (Exception ex)
             {
-                throw new InvalidOperationException($"Unable to resolve charset '{charset}' to a known encoding.", ex);
+                throw new InvalidOperationException($"Unable to read the request as JSON because the request content type charset '{charset}' is not a known encoding.", ex);
             }
         }
     }
