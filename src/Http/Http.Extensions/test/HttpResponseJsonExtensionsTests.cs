@@ -2,9 +2,11 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http.Json;
@@ -63,23 +65,27 @@ namespace Microsoft.AspNetCore.Http.Extensions.Tests
 
             // Act
             var options = new JsonSerializerOptions();
-            options.WriteIndented = true;
-            await context.Response.WriteAsJsonAsync(new int[] { 1 }, options);
+            options.Converters.Add(new IntegerConverter());
+            await context.Response.WriteAsJsonAsync(new int[] { 1, 2, 3 }, options);
 
             // Assert
             Assert.Equal(JsonConstants.JsonContentTypeWithCharset, context.Response.ContentType);
 
-            var data = body.ToArray();
-            Assert.Collection(data,
-                b => Assert.Equal((byte)'[', b),
-                b => Assert.Equal((byte)'\r', b),
-                b => Assert.Equal((byte)'\n', b),
-                b => Assert.Equal((byte)' ', b),
-                b => Assert.Equal((byte)' ', b),
-                b => Assert.Equal((byte)'1', b),
-                b => Assert.Equal((byte)'\r', b),
-                b => Assert.Equal((byte)'\n', b),
-                b => Assert.Equal((byte)']', b));
+            var data = Encoding.UTF8.GetString(body.ToArray());
+            Assert.Equal("[false,true,false]", data);
+        }
+
+        private class IntegerConverter : JsonConverter<int>
+        {
+            public override int Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                throw new NotImplementedException();
+            }
+
+            public override void Write(Utf8JsonWriter writer, int value, JsonSerializerOptions options)
+            {
+                writer.WriteBooleanValue(value % 2 == 0);
+            }
         }
 
         [Fact]
